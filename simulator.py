@@ -1,8 +1,10 @@
 import httpx
 import asyncio
-import random
 
-BASE_URL = "http://127.0.0.1:8000"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
 
 # Evenements possibles du Order Service
 ORDER_EVENTS = [

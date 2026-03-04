@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+
+  event_manager:
+    build: .
+    container_name: event_manager
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./events.db:/app/events.db
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  simulator:
+    build: .
+    container_name: simulator
+    command: python simulator.py
+    env_file:
+      - .env
+    depends_on:
+      event_manager:
+        condition: service_healthy
+    restart: "no"
+
+  notification_service:
+    build: .
+    container_name: notification_service
+    command: python notification_service.py
+    volumes:
+      - ./notifications.log:/app/notifications.log
+      - ./events.db:/app/events.db
+    env_file:
+      - .env
+    depends_on:
+      event_manager:
+        condition: service_healthy
+    restart: unless-stopped
