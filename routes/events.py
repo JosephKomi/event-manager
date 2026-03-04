@@ -119,3 +119,34 @@ async def get_event(event_id: str, db: aiosqlite.Connection = Depends(get_db)):
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+@router.patch("/events/{event_id}/status")
+async def update_event_status(
+    event_id: str,
+    status_update: dict,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Met a jour le statut d'un evenement."""
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    async with db.execute(
+        "SELECT id FROM events WHERE id = ?", (event_id,)
+    ) as cursor:
+        row = await cursor.fetchone()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="Evenement non trouve")
+
+    await db.execute(
+        "UPDATE events SET status = ?, updated_at = ? WHERE id = ?",
+        (status_update["status"], now, event_id),
+    )
+    await db.commit()
+
+    return {
+        "id": event_id,
+        "status": status_update["status"],
+        "updated_at": now
+    }
